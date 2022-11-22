@@ -51,7 +51,7 @@ class GameState():
 
         #enpassant move
         if move.isEnpassantMove:
-            self.board[move.startRow][move.endCol] == "--" #capturing the pawn
+            self.board[move.startRow][move.endCol] = "--" #capturing the pawn
 
         #update enPassantPossible var
         if move.pieceMoved[1] == 'p' and abs(move.startRow - move.endRow) == 2: #only 2 square pawn advance
