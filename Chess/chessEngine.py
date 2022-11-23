@@ -31,6 +31,9 @@ class GameState():
         self.checkMate = False
         self.staleMate = False
         self.enpassantPossible = () #coordinates for square where en passant capture is possible
+        self.currentCastlingRights = CastleRights(True, True, True, True)
+        self.castleRightLog = [CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks,
+                                            self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)]
     """
     Takes a move as its parameter and executes it (not for castling, pawn promotion, and en passant)
     """
@@ -59,6 +62,9 @@ class GameState():
             self.enpassantPossible = ((move.startRow + move.endRow)//2, move.startCol)
         else:
             self.enpassantPossible = ()
+
+        #update castling rights - whenever it is a rook or a king move
+        updateCastleRights(move)
     """
     Undo the last move made
     """
@@ -81,6 +87,31 @@ class GameState():
             #undo a 2 square pawn advance
             if move.pieceMoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
                 self.enpassantPossible = ()
+
+    '''
+    Update the castle rights given the move
+    '''
+    def updateCastleRights(self, move):
+        if move.pieceMoved == 'wK':
+            self.currentCastlingRights.wks = False
+            self.currentCastlingRights.wqs = False
+        elif move.pieceMoved == 'bk':
+            self.currentCastlingRights.bks = False
+            self.currentCastlingRights.bqs = False
+        elif move.pieceMoved == 'wR':
+            if move.startRow == 7:
+                if move.startCol == 0: #leftrook
+                    self.currentCastlingRights.wqs = False
+                elif move.startCol == 7:
+                    self.currentCastlingRights.wks = False
+        elif move.pieceMoved == 'bR':
+            if move.startRow == 0:
+                if move.startCol == 0: #leftrook
+                    self.currentCastlingRights.bqs = False
+                elif move.startCol == 7:
+                    self.currentCastlingRights.bks = False
+
+
     """
     Al moves considering checks
     """
@@ -246,6 +277,13 @@ class GameState():
                 endPiece = self.board[endRow][endCol]
                 if endPiece[0] != allyColor:  # Enemy piece or empty square
                     moves.append(Move((r, c), (endRow, endCol), self.board) )
+
+class CastleRights():
+    def __init__(self, wks, bks, wqs, bqs):
+        self.wks = wks
+        self.bks = bks
+        self.wqs = wqs
+        self.bqs = bqs
 
 class Move():
 
