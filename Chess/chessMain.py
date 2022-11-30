@@ -5,7 +5,7 @@ displaying current game state object
 """
 
 import pygame as p
-from Chess import chessEngine
+from Chess import chessEngine, chessAI
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8
@@ -20,7 +20,6 @@ Will be called once in main
 """
 def load_images():
     pieces = ["wQ", "wK", "wB", "wN", "wR", "wp", "bK", "bQ", "bB", "bN", "bR","bp"]
-
     for piece in pieces:
         IMAGES[piece] = p.transform.scale(p.image.load("images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
 
@@ -41,38 +40,47 @@ def main():
     running = True
     sqSelected = () #no square is selected, keep track of last click of user (tuple: (row, col))
     playerClicks = [] #keep track of player clicks (two tuples: [(6, 4), (4, 4)]
+    playerOne = False #If Human is playing white, then this will be true. If AI, then false
+    playerTwo = False #Same as above but for black pieces
     while running:
+        humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             #mouse handler
             elif e.type == p.MOUSEBUTTONDOWN:
-                location = p.mouse.get_pos() #(x, y) location of mouse
-                col = location[0]//SQ_SIZE
-                row = location[1]//SQ_SIZE
-                if sqSelected == (row, col): #user clicked the same square twice
-                    sqSelected = () #unselect
-                    playerClicks = [] #clear player clicks
-                else:
-                    sqSelected = (row, col)
-                    playerClicks.append(sqSelected) #append for both 1st and 2nd clicks
-                if len(playerClicks) == 2: #after second click
-                    move = chessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
-                    print(move.getChessNotation())
-                    for i in range(len(validMoves)):
-                        if move == validMoves[i]:
-                            gs.makeMove(validMoves[i])
-                            moveMade = True
-                            sqSelected = () #reset user clicks
-                            playerClicks = []
-                    if not moveMade:
-                        playerClicks = [sqSelected]
-            #Key handler
-            elif e.type == p.KEYDOWN:
-                if e.key == p.K_z: #undo when z is pressed
-                    gs.undoMove()
-                    moveMade = True
+                if humanTurn:
+                    location = p.mouse.get_pos() #(x, y) location of mouse
+                    col = location[0]//SQ_SIZE
+                    row = location[1]//SQ_SIZE
+                    if sqSelected == (row, col): #user clicked the same square twice
+                        sqSelected = () #unselect
+                        playerClicks = [] #clear player clicks
+                    else:
+                        sqSelected = (row, col)
+                        playerClicks.append(sqSelected) #append for both 1st and 2nd clicks
+                    if len(playerClicks) == 2: #after second click
+                        move = chessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
+                        print(move.getChessNotation())
+                        for i in range(len(validMoves)):
+                            if move == validMoves[i]:
+                                gs.makeMove(validMoves[i])
+                                moveMade = True
+                                sqSelected = () #reset user clicks
+                                playerClicks = []
+                        if not moveMade:
+                            playerClicks = [sqSelected]
+                #Key handler
+                elif e.type == p.KEYDOWN:
+                    if e.key == p.K_z: #undo when z is pressed
+                        gs.undoMove()
+                        moveMade = True
 
+        #AI Move Finder logic
+        if not humanTurn:
+            AIMove = chessAI.findRandomMove(validMoves)
+            gs.makeMove(AIMove)
+            moveMade = True
 
         if moveMade:
             validMoves = gs.getValidMoves()
