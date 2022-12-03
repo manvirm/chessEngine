@@ -12,21 +12,29 @@ Find best move based on material alone
 '''
 def findBestMove(gs, validMoves):
     turnMultiplier = 1 if gs.whiteToMove else -1 #both black and white try to get max score
-    maxScore = -CHECKMATE
-    bestMove = None
+    opponentMinMaxScore = CHECKMATE
+    bestPlayerMove = None
+    random.shuffle(validMoves)
     for playerMove in validMoves:
         gs.makeMove(playerMove)
-        if gs.checkMate:
-            score = CHECKMATE
-        elif gs.staleMate:
-            score = STALEMATE
-        else:
-            score = turnMultiplier * scoreMaterial(gs.board)
-        if score > maxScore:
-            maxScore = score
-            bestMove = playerMove
+        opponentsMoves = gs.getValidMoves()
+        opponentMaxScore = -CHECKMATE
+        for opponentsMove in opponentsMoves:
+            gs.makeMove(opponentsMove)
+            if gs.checkMate:
+                score = -turnMultiplier * CHECKMATE
+            elif gs.staleMate:
+                score = STALEMATE
+            else:
+                score = -turnMultiplier * scoreMaterial(gs.board)
+            if score > opponentMaxScore:
+                opponentMaxScore = score
+            gs.undoMove()
+        if opponentMinMaxScore > opponentMaxScore:
+            opponentMinMaxScore = opponentMaxScore
+            bestPlayerMove = playerMove
         gs.undoMove()
-    return bestMove
+    return bestPlayerMove
 
 '''
 Score based on material
